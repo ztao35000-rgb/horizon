@@ -1,0 +1,22 @@
+name: port-pack-check
+# Builds and tests horizon-port-pack (the Java-mod translator) on a GitHub runner.
+on:
+  workflow_dispatch:
+  push:
+    branches: [port-pack-safe-writes]
+    paths:
+      - "crates/horizon-port-pack/**"
+      - "crates/horizon-port-pack-cli/**"
+      - ".github/workflows/port-pack-check.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Test horizon-port-pack
+        run: cargo test -p horizon-port-pack --locked
+      - name: Build the command line
+        run: cargo build --release -p horizon-port-pack-cli --locked

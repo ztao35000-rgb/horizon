@@ -13,7 +13,7 @@ pub type Log<'a> = &'a dyn Fn(String);
 
 pub fn write_json(path: &Path, value: &impl serde::Serialize) -> Result<(), String> {
     let text = serde_json::to_string_pretty(value).map_err(|e| e.to_string())?;
-    fs::write(path, text).map_err(|e| format!("{}: {e}", path.display()))
+    crate::safe_io::write_atomic(path, text.as_bytes())
 }
 
 pub fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T, String> {
@@ -58,8 +58,7 @@ pub fn inventory(work: &Path, offline: bool, log: Log) -> Result<Vec<inventory::
     }
     let records = inventory::build(&pack, &cache, work);
     write_json(&work.join("inventory.json"), &records)?;
-    fs::write(work.join("inventory.csv"), inventory::csv(&records))
-        .map_err(|e| format!("inventory.csv: {e}"))?;
+    crate::safe_io::write_atomic(&work.join("inventory.csv"), inventory::csv(&records).as_bytes())?;
     let jars = records.iter().filter(|r| r.jar.is_some()).count();
     log(format!("{} files, {jars} jars read", records.len()));
     for (title, field) in [
@@ -315,8 +314,10 @@ pub fn report(work: &Path, log: Log) -> Result<Vec<report::Row>, String> {
     let rows = report::build(&records, work);
     write_json(&work.join("coverage.json"), &rows)?;
     let title = title(&pack);
-    fs::write(work.join("coverage.md"), report::markdown(&title, &rows))
-        .map_err(|e| format!("coverage.md: {e}"))?;
+    crate::safe_io::write_atomic(
+        &work.join("coverage.md"),
+        report::markdown(&title, &rows).as_bytes(),
+    )?;
     log(format!(
         "{title}: {} files: {:?}",
         rows.len(),

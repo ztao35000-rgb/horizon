@@ -2042,10 +2042,8 @@ fn tags_used(v: &Value, out: &mut BTreeSet<String>) {
 }
 
 fn write(path: &Path, bytes: &[u8]) -> Result<(), String> {
-    if let Some(dir) = path.parent() {
-        fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
-    }
-    fs::write(path, bytes).map_err(|e| format!("{}: {e}", path.display()))
+    // Atomic: an interrupted carry-over must not leave a truncated file under the right name.
+    crate::safe_io::write_atomic(path, bytes)
 }
 
 #[cfg(test)]
