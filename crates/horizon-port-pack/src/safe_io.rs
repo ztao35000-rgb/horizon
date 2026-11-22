@@ -47,7 +47,7 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
 pub fn write_checked(path: &Path, bytes: &[u8]) -> Result<(), String> {
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     if matches!(ext, "json" | "mcmeta") {
-        serde_json::from_slice::<serde_json::de::IgnoredAny>(bytes)
+        serde_json::from_slice::<serde::de::IgnoredAny>(bytes)
             .map_err(|e| format!("{}: not valid JSON, not written ({e})", path.display()))?;
     }
     write_atomic(path, bytes)
